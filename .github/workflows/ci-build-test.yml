@@ -17,27 +17,21 @@ jobs:
       - name: 🛠️ Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          # Giả định .NET 8.0.x. Thay đổi nếu bạn dùng phiên bản khác.
           dotnet-version: '8.0.x' 
           
       - name: 💾 Restore & Build test project only
         run: |
-          # ĐƯỜNG DẪN ĐẾN PROJECT TEST
-          PROJECT_PATH="Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj"
-          
-          # Restore dependencies cho project test
-          dotnet restore $PROJECT_PATH
-          # Build project test
-          dotnet build $PROJECT_PATH --no-restore --configuration Release
+          # ĐÃ DÙNG ĐƯỜNG DẪN CHÍNH XÁC CỦA BẠN VÀ KHẮC PHỤC LỖI SCRIPTING
+          dotnet restore Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj
+          dotnet build Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj --no-restore --configuration Release
           
       - name: ▶️ Run Unit Tests (TRX + Coverage)
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path TestResults -Force
-          # ĐƯỜNG DẪN ĐẾN PROJECT TEST
-          PROJECT_PATH="Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj"
           
-          dotnet test $PROJECT_PATH `
+          # ĐÃ DÙNG ĐƯỜNG DẪN CHÍNH XÁC CỦA BẠN VÀ KHẮC PHỤC LỖI SCRIPTING
+          dotnet test Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj `
             --no-build `
             --configuration Release `
             --collect:"XPlat Code Coverage" `
@@ -56,7 +50,8 @@ jobs:
         if: always()
         with:
           report_paths: 'TestResults/**/*.trx'
-          check_name: 'Unit Test Results - QLKS'
+          # TÊN BÁO CÁO ĐÃ ĐƯỢC ĐẶT LẠI THEO NGỮ CẢNH QLKS CỦA BẠN
+          check_name: 'Unit Test Results - QLKS' 
           fail_on_failure: false
           
       - name: 📊 Generate Coverage Report
