@@ -1,36 +1,53 @@
 ﻿using DAL_QLKS;
 using DTO_QLKS;
+using System;
+using System.Collections.Generic;
 
 public class BUSKhachHang
 {
-    DALKhachHang dalKhachHang = new DALKhachHang();
+    private readonly DALKhachHang _dal;
 
-    // ✅ Thêm phương thức GetAll() để tương thích với LoadComboBox
+    // ✅ Constructor chạy thật
+    public BUSKhachHang()
+    {
+        _dal = new DALKhachHang();
+    }
+
+    // ✅ Constructor để Unit Test dùng Fake DAL
+    public BUSKhachHang(DALKhachHang dal)
+    {
+        _dal = dal;
+    }
+
+    // Lấy tất cả khách hàng
     public List<KhachHang> GetAll()
     {
-        return GetKhachHangList();
+        return _dal.selectAll();
     }
 
+    // Lấy danh sách (alias cho GetAll)
     public List<KhachHang> GetKhachHangList()
     {
-        return dalKhachHang.selectAll();
+        return _dal.selectAll();
     }
 
+    // Lấy theo ID
     public KhachHang GetKhachHangById(string id)
     {
-        return dalKhachHang.selectById(id);
+        return _dal.selectById(id);
     }
 
-    public string InsertKhachHang(KhachHang kH)
+    // Thêm khách hàng
+    public string InsertKhachHang(KhachHang kh)
     {
         try
         {
-            kH.KhachHangID = dalKhachHang.generateKhachHangID();
-            if (string.IsNullOrEmpty(kH.KhachHangID))
-            {
-                return "Mã phòng không hợp lệ.";
-            }
-            dalKhachHang.insertKhachHang(kH);
+            kh.KhachHangID = _dal.generateKhachHangID();
+
+            if (string.IsNullOrEmpty(kh.KhachHangID))
+                return "Mã khách hàng không hợp lệ.";
+
+            _dal.insertKhachHang(kh);
             return string.Empty;
         }
         catch (Exception ex)
@@ -39,15 +56,15 @@ public class BUSKhachHang
         }
     }
 
-    public string UpdateKhachHang(KhachHang kH)
+    // Cập nhật
+    public string UpdateKhachHang(KhachHang kh)
     {
         try
         {
-            if (string.IsNullOrEmpty(kH.KhachHangID))
-            {
-                return "Mã Khách Hàng không hợp lệ.";
-            }
-            dalKhachHang.updateKhachHang(kH);
+            if (string.IsNullOrEmpty(kh.KhachHangID))
+                return "Mã khách hàng không hợp lệ.";
+
+            _dal.updateKhachHang(kh);
             return string.Empty;
         }
         catch (Exception ex)
@@ -56,11 +73,12 @@ public class BUSKhachHang
         }
     }
 
-    public string DeleteKhachHang(string KhachHangId)
+    // Xóa
+    public string DeleteKhachHang(string id)
     {
         try
         {
-            dalKhachHang.deleteKhachHang(KhachHangId);
+            _dal.deleteKhachHang(id);
             return string.Empty;
         }
         catch (Exception ex)
@@ -69,12 +87,9 @@ public class BUSKhachHang
         }
     }
 
-
-
-
+    // Sinh mã
     public string GenerateKhachHangID()
     {
-        return dalKhachHang.generateKhachHangID();
+        return _dal.generateKhachHangID();
     }
-
 }

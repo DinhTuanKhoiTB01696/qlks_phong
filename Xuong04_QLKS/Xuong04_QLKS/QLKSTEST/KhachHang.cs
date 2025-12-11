@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using DTO_QLKS;
 using BLL_QLKS;
+using QLTV.Tests.TestDoubles;   // ← Quan trọng: nơi chứa FakeDALKhachHang
 using System;
 using System.Collections.Generic;
 
@@ -10,11 +11,13 @@ namespace TestProject1
     public class KhachHangTests
     {
         private BUSKhachHang _bll;
+        private FakeDALKhachHang _fakeDal;
 
         [SetUp]
         public void Setup()
         {
-            _bll = new BUSKhachHang();
+            _fakeDal = new FakeDALKhachHang();
+            _bll = new BUSKhachHang(_fakeDal);   // ← BLL sử dụng Fake DAL
         }
 
         private KhachHang TaoKH()
@@ -32,10 +35,9 @@ namespace TestProject1
             };
         }
 
-        // =====================================================================
-        // 1. TEST GET ALL (1–5)
-        // =====================================================================
-
+        // ================================================================
+        // 1. TEST GET ALL
+        // ================================================================
         [Test]
         public void TC01_GetAll_NotNull() =>
             Assert.IsNotNull(_bll.GetAll());
@@ -62,17 +64,15 @@ namespace TestProject1
             Assert.DoesNotThrow(() => _bll.GetAll());
         }
 
-        // =====================================================================
-        // 2. TEST INSERT (6–15)
-        // =====================================================================
-
+        // ================================================================
+        // 2. TEST INSERT
+        // ================================================================
         [Test]
         public void TC06_Insert_Success()
         {
             var k = TaoKH();
             string msg = _bll.InsertKhachHang(k);
             Assert.IsEmpty(msg);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -81,7 +81,6 @@ namespace TestProject1
             var k = TaoKH();
             _bll.InsertKhachHang(k);
             Assert.IsNotNull(_bll.GetKhachHangById(k.KhachHangID));
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -91,37 +90,36 @@ namespace TestProject1
             string msg = _bll.InsertKhachHang(k);
             Assert.IsEmpty(msg);
             Assert.IsNotNull(k.KhachHangID);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
-        public void TC09_Insert_InvalidPhone_Fail()
+        public void TC09_Insert_InvalidPhone_NotThrow()
         {
             var k = TaoKH();
             k.SoDienThoai = "";
             Assert.DoesNotThrow(() => _bll.InsertKhachHang(k));
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
-        public void TC10_Insert_MissingName_ShouldStillInsert()
+        public void TC10_Insert_MissingName_NotThrow()
         {
             var k = TaoKH();
             k.HoTen = "";
             Assert.DoesNotThrow(() => _bll.InsertKhachHang(k));
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
         public void TC11_Insert_DuplicateID_NotThrow()
         {
             var k1 = TaoKH();
-            var k2 = k1;
+            var k2 = TaoKH();
 
             _bll.InsertKhachHang(k1);
-            Assert.DoesNotThrow(() => _bll.InsertKhachHang(k2)); // ID sẽ tự generate lại
-            _bll.DeleteKhachHang(k1.KhachHangID);
-            _bll.DeleteKhachHang(k2.KhachHangID);
+            Assert.DoesNotThrow(() =>
+            {
+                k2.KhachHangID = k1.KhachHangID;
+                _bll.InsertKhachHang(k2);
+            });
         }
 
         [Test]
@@ -130,9 +128,9 @@ namespace TestProject1
             var k = TaoKH();
             k.HoTen = new string('A', 200);
             _bll.InsertKhachHang(k);
+
             var result = _bll.GetKhachHangById(k.KhachHangID);
             Assert.AreEqual(200, result.HoTen.Length);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -140,9 +138,9 @@ namespace TestProject1
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             var get = _bll.GetKhachHangById(k.KhachHangID);
             Assert.AreEqual(DateTime.Today, get.NgayTao.Date);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -152,7 +150,6 @@ namespace TestProject1
             k.GhiChu = "";
             _bll.InsertKhachHang(k);
             Assert.IsNotNull(_bll.GetKhachHangById(k.KhachHangID));
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -161,15 +158,13 @@ namespace TestProject1
             var k = TaoKH();
             k.GhiChu = null;
             _bll.InsertKhachHang(k);
-            var get = _bll.GetKhachHangById(k.KhachHangID);
-            Assert.IsNotNull(get);
-            _bll.DeleteKhachHang(k.KhachHangID);
+
+            Assert.IsNotNull(_bll.GetKhachHangById(k.KhachHangID));
         }
 
-        // =====================================================================
-        // 3. TEST GET BY ID (16–20)
-        // =====================================================================
-
+        // ================================================================
+        // 3. TEST GET BY ID
+        // ================================================================
         [Test]
         public void TC16_GetById_NotFound()
         {
@@ -182,7 +177,6 @@ namespace TestProject1
             var k = TaoKH();
             _bll.InsertKhachHang(k);
             Assert.AreEqual(k.KhachHangID, _bll.GetKhachHangById(k.KhachHangID).KhachHangID);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -197,7 +191,6 @@ namespace TestProject1
             var k = TaoKH();
             _bll.InsertKhachHang(k);
             Assert.IsInstanceOf<KhachHang>(_bll.GetKhachHangById(k.KhachHangID));
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -205,33 +198,33 @@ namespace TestProject1
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
-            _bll.DeleteKhachHang(k.KhachHangID);
+            _fakeDal.deleteKhachHang(k.KhachHangID);
             Assert.IsNull(_bll.GetKhachHangById(k.KhachHangID));
         }
 
-        // =====================================================================
-        // 4. TEST UPDATE (21–30)
-        // =====================================================================
-
+        // ================================================================
+        // 4. TEST UPDATE
+        // ================================================================
         [Test]
         public void TC21_Update_Success()
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             k.HoTen = "Updated";
             _bll.UpdateKhachHang(k);
+
             Assert.AreEqual("Updated", _bll.GetKhachHangById(k.KhachHangID).HoTen);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
-        public void TC22_Update_EmptyName()
+        public void TC22_Update_EmptyName_NotThrow()
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             k.HoTen = "";
             Assert.DoesNotThrow(() => _bll.UpdateKhachHang(k));
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -239,7 +232,9 @@ namespace TestProject1
         {
             var k = TaoKH();
             k.KhachHangID = "";
-            Assert.AreEqual("Mã Khách Hàng không hợp lệ.", _bll.UpdateKhachHang(k));
+
+            string msg = _bll.UpdateKhachHang(k);
+            Assert.AreEqual("Mã Khách Hàng không hợp lệ.", msg);
         }
 
         [Test]
@@ -247,10 +242,11 @@ namespace TestProject1
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             k.DiaChi = new string('B', 255);
             _bll.UpdateKhachHang(k);
+
             Assert.AreEqual(255, _bll.GetKhachHangById(k.KhachHangID).DiaChi.Length);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -258,10 +254,11 @@ namespace TestProject1
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             k.GioiTinh = "Nữ";
             _bll.UpdateKhachHang(k);
+
             Assert.AreEqual("Nữ", _bll.GetKhachHangById(k.KhachHangID).GioiTinh);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -269,10 +266,11 @@ namespace TestProject1
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             k.CCCD = "987654321";
             _bll.UpdateKhachHang(k);
+
             Assert.AreEqual("987654321", _bll.GetKhachHangById(k.KhachHangID).CCCD);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -280,10 +278,11 @@ namespace TestProject1
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             k.NgayTao = DateTime.Now.AddDays(-5);
             _bll.UpdateKhachHang(k);
+
             Assert.AreEqual(k.NgayTao.Date, _bll.GetKhachHangById(k.KhachHangID).NgayTao.Date);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -291,10 +290,11 @@ namespace TestProject1
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             k.GhiChu = "Modified";
             _bll.UpdateKhachHang(k);
+
             Assert.AreEqual("Modified", _bll.GetKhachHangById(k.KhachHangID).GhiChu);
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -302,6 +302,7 @@ namespace TestProject1
         {
             var k = TaoKH();
             k.KhachHangID = "KH999999";
+
             Assert.DoesNotThrow(() => _bll.UpdateKhachHang(k));
         }
 
@@ -311,15 +312,15 @@ namespace TestProject1
             Assert.DoesNotThrow(() => _bll.UpdateKhachHang(null));
         }
 
-        // =====================================================================
-        // 5. TEST DELETE (31–35)
-        // =====================================================================
-
+        // ================================================================
+        // 5. TEST DELETE
+        // ================================================================
         [Test]
         public void TC31_Delete_Success()
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             Assert.DoesNotThrow(() => _bll.DeleteKhachHang(k.KhachHangID));
         }
 
@@ -346,19 +347,18 @@ namespace TestProject1
         {
             var k = TaoKH();
             _bll.InsertKhachHang(k);
+
             _bll.DeleteKhachHang(k.KhachHangID);
+
             Assert.DoesNotThrow(() => _bll.DeleteKhachHang(k.KhachHangID));
         }
 
-        // =====================================================================
-        // 6. TEST GENERATE ID (36–40)
-        // =====================================================================
-
+        // ================================================================
+        // 6. GENERATE ID
+        // ================================================================
         [Test]
-        public void TC36_GenerateID_NotNull()
-        {
+        public void TC36_GenerateID_NotNull() =>
             Assert.IsNotNull(_bll.GenerateKhachHangID());
-        }
 
         [Test]
         public void TC37_GenerateID_Format()
@@ -385,10 +385,10 @@ namespace TestProject1
             string id = _bll.GenerateKhachHangID();
             Assert.IsTrue(id.StartsWith("KH"));
         }
-        // =====================================================================
-        // 7. TEST EXTRA (41–50)
-        // =====================================================================
 
+        // ================================================================
+        // 7. EXTRA TESTS
+        // ================================================================
         [Test]
         public void TC41_Insert_NullObject_NotThrow()
         {
@@ -406,8 +406,6 @@ namespace TestProject1
             int after = _bll.GetAll().Count;
 
             Assert.Greater(after, before);
-
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -429,8 +427,6 @@ namespace TestProject1
             Assert.AreEqual("New Address", get.DiaChi);
             Assert.AreEqual("Khác", get.GioiTinh);
             Assert.AreEqual("Updated note", get.GhiChu);
-
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -450,14 +446,12 @@ namespace TestProject1
             var k = new KhachHang
             {
                 HoTen = "A"
-                // Không set DiaChi, GioiTinh, CCCD, GhiChu
+                // Optional fields không set
             };
 
             Assert.DoesNotThrow(() => _bll.InsertKhachHang(k));
 
             Assert.IsNotNull(_bll.GetKhachHangById(k.KhachHangID));
-
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
@@ -487,10 +481,9 @@ namespace TestProject1
                 var k = TaoKH();
                 _bll.InsertKhachHang(k);
                 ids.Add(k.KhachHangID);
-                _bll.DeleteKhachHang(k.KhachHangID);
             }
 
-            Assert.AreEqual(5, ids.Count); // Không trùng ID
+            Assert.AreEqual(5, ids.Count);
         }
 
         [Test]
@@ -500,8 +493,6 @@ namespace TestProject1
             _bll.InsertKhachHang(k);
 
             Assert.DoesNotThrow(() => _bll.UpdateKhachHang(k));
-
-            _bll.DeleteKhachHang(k.KhachHangID);
         }
 
         [Test]
