@@ -22,16 +22,22 @@ jobs:
           
       - name: 💾 Restore & Build test project only
         run: |
-          # ĐÃ ĐIỀU CHỈNH ĐƯỜNG DẪN DỰA TRÊN THÔNG TIN BẠN CUNG CẤP
-          dotnet restore Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj
-          dotnet build Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj --no-restore --configuration Release
+          # ĐƯỜNG DẪN ĐẾN PROJECT TEST
+          PROJECT_PATH="Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj"
+          
+          # Restore dependencies cho project test
+          dotnet restore $PROJECT_PATH
+          # Build project test
+          dotnet build $PROJECT_PATH --no-restore --configuration Release
           
       - name: ▶️ Run Unit Tests (TRX + Coverage)
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path TestResults -Force
-          # ĐÃ ĐIỀU CHỈNH ĐƯỜNG DẪN DỰA TRÊN THÔNG TIN BẠN CUNG CẤP
-          dotnet test Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj `
+          # ĐƯỜNG DẪN ĐẾN PROJECT TEST
+          PROJECT_PATH="Xuong04_QLKS/Xuong04_QLKS/QLKSTEST/QLKSTEST.csproj"
+          
+          dotnet test $PROJECT_PATH `
             --no-build `
             --configuration Release `
             --collect:"XPlat Code Coverage" `
